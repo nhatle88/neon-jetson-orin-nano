@@ -153,8 +153,8 @@ class RTSPStream:
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 ! "
                  "rtph264depay ! h264parse ! avdec_h264 ! "
-    		"videoconvert ! video/x-raw,format=BGR ! "
-    		"appsink drop=true max-buffers=1 sync=false "
+    		    "videoconvert ! video/x-raw,format=BGR ! "
+    		    "appsink drop=true max-buffers=1 sync=false "
             )
         else:
             pipeline = (
