@@ -152,15 +152,15 @@ class RTSPStream:
             # Use a simpler pipeline with avdec_h264 (and ensure credentials are URL-encoded)
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 ! "
-                 "rtph264depay ! h264parse ! avdec_h264 ! "
-    		    "videoconvert ! video/x-raw,format=BGR ! "
+                "rtph264depay ! h264parse ! avdec_h264 ! "
+    		    "videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
     		    "appsink drop=true max-buffers=1 sync=false "
             )
         else:
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 protocols=udp drop-on-latency=true ! "
                 "rtph264depay ! h264parse ! queue max-size-buffers=1 ! nvv4l2decoder ! "
-                "nvvidconv ! videoconvert ! video/x-raw,format=BGR ! "
+                "nvvidconv ! videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
                 "appsink drop=true max-buffers=1 sync=false"
             )
         capture = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
@@ -180,7 +180,7 @@ class RTSPStream:
                 continue
 
             # Resize the frame to 640x480 for faster processing
-            frame = cv2.resize(frame, (640, 480))
+            #frame = cv2.resize(frame, (640, 480))
 
             # Anti-spoofing: check liveness
             if self.prev_frame is not None:
@@ -192,6 +192,7 @@ class RTSPStream:
                         latest_frames[self.name] = frame.copy()
                     self.prev_frame = frame.copy()
                     continue
+            self.prev_frame = frame.copy()
 
             # If ROI is defined, use that portion for face recognition.
             if self.roi is not None:
@@ -229,7 +230,7 @@ def main():
         "Camera Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
         "Camera Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
         # Note: URL below uses a percent-encoded password. Replace accordingly.
-        "Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
+        #"Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
     }
 
     # Define a dictionary mapping camera names to ROI tuples.
