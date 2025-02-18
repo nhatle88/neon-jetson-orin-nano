@@ -167,18 +167,17 @@ class RTSPStream:
         Continuously reads frames, performs liveness check, and recognizes faces
         only in the defined ROI (if provided). Also overlays the camera name on the frame.
         """
+        first_warning = True
         while self.running:
             ret, frame = self.video_capture.read()
             if not ret:
-                print(f"[WARNING] Failed to grab frame from {self.rtsp_url}")
-                #continue
+                if first_warning:
+                    print(f"[WARNING] Failed to grab frame from {self.rtsp_url}")
+                    first_warning = False
                 # Create a black frame if the stream is not running
                 frame = np.zeros((480, 640, 3), dtype=np.uint8)
                 cv2.putText(frame, "Stream Not Available", (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (0, 0, 255), 2)
-
-            # Resize the frame to 640x480 for faster processing
-            # frame = cv2.resize(frame, (640, 480))
 
             # If ROI is defined, use that portion for face recognition.
             if self.roi is not None:
@@ -216,7 +215,6 @@ def main():
     rtsp_streams = {
         "Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
         "Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
-        # Note: URL below uses a percent-encoded password. Replace accordingly.
         "HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
     }
 
@@ -225,7 +223,7 @@ def main():
     camera_rois = {
         "Labs": (50, 100, 500, 350),
         "Spaceship": (20, 250, 400, 200),
-        "HIK Vision 1": None  # No ROI defined for Camera 3.
+        "HIK Vision 1": (10, 10, 600, 400)  # No ROI defined for Camera 3.
     }
 
     face_recognizer = FaceRecognition(FACEBANK_PATH)
