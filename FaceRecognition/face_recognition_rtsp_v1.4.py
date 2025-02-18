@@ -179,6 +179,9 @@ class RTSPStream:
                 print(f"[WARNING] Failed to grab frame from {self.rtsp_url}")
                 continue
 
+            # Resize the frame to 640x480 for faster processing
+            frame = cv2.resize(frame, (640, 480))
+
             # Anti-spoofing: check liveness
             if self.prev_frame is not None:
                 live, mean_diff = is_live_frame(frame, self.prev_frame, diff_threshold=2.0)
@@ -226,7 +229,7 @@ def main():
         "Camera Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
         "Camera Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
         # Note: URL below uses a percent-encoded password. Replace accordingly.
-        "Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
+        #"Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
     }
 
     # Define a dictionary mapping camera names to ROI tuples.
