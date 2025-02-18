@@ -176,8 +176,14 @@ class RTSPStream:
                     first_warning = False
                 # Create a black frame if the stream is not running
                 frame = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.putText(frame, "Stream Not Available", (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (0, 0, 255), 2)
+                text = "Stream Not Available"
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 1
+                font_thickness = 2
+                text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+                text_x = (frame.shape[1] - text_size[0]) // 2
+                text_y = (frame.shape[0] + text_size[1]) // 2
+                cv2.putText(frame, text, (text_x, text_y), font, font_scale, (250, 0, 0), font_thickness)
 
             # If ROI is defined, use that portion for face recognition.
             if self.roi is not None:
@@ -261,5 +267,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# happy code
