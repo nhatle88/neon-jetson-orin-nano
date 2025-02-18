@@ -12,6 +12,7 @@ THRESHOLD = 0.5  # Face distance threshold for recognition
 latest_frames = {}
 frame_lock = threading.Lock()  # Protects access to latest_frames
 
+
 def compute_confidence(distance, threshold=THRESHOLD, k=10):
     """
     Computes a confidence score (in percentage) from a face distance value using
@@ -20,6 +21,7 @@ def compute_confidence(distance, threshold=THRESHOLD, k=10):
     """
     confidence = 1 / (1 + np.exp(k * (distance - threshold))) * 100
     return confidence
+
 
 def combine_frames_grid(frames, cols=2):
     """
@@ -45,12 +47,12 @@ def combine_frames_grid(frames, cols=2):
         scale = min_height / h
         new_w = int(w * scale)
         resized_frames.append(cv2.resize(frame, (new_w, min_height)))
-    
+
     # Organize frames into rows.
     rows = []
     for i in range(0, len(resized_frames), cols):
         # Extract one row of frames.
-        row_frames = resized_frames[i:i+cols]
+        row_frames = resized_frames[i:i + cols]
         # If the row has fewer frames than the desired columns,
         # you might want to pad with black images.
         if len(row_frames) < cols:
@@ -59,25 +61,15 @@ def combine_frames_grid(frames, cols=2):
             row_frames.extend([black_frame] * (cols - len(row_frames)))
         row = np.hstack(row_frames)
         rows.append(row)
-    
+
     # Stack all rows vertically.
     grid = np.vstack(rows)
     return grid
 
 
-def is_live_frame(current_frame, previous_frame, diff_threshold=2.0):
-    """
-    Compares the current frame with the previous frame.
-    Returns a tuple (is_live, mean_diff).
-    A low mean difference suggests the frame is nearly identical to the previous one,
-    which can indicate a static image (spoof).
-    """
-    diff = cv2.absdiff(current_frame, previous_frame)
-    mean_diff = np.mean(diff)
-    return (mean_diff > diff_threshold, mean_diff)
-
 class FaceRecognition:
     """Handles loading the facebank and performing face recognition."""
+
     def __init__(self, facebank_path):
         self.facebank = self.load_facebank(facebank_path)
 
@@ -126,11 +118,13 @@ class FaceRecognition:
             results.append((top, right, bottom, left, label))
         return results
 
+
 class RTSPStream:
     """
     Manages one RTSP stream and processes frames for face recognition,
     liveness check, and (optionally) a Region of Interest (ROI).
     """
+
     def __init__(self, name, rtsp_url, face_recognizer, roi=None):
         """
         roi: Optional tuple (x, y, width, height) specifying the ROI for face recognition.
@@ -153,8 +147,8 @@ class RTSPStream:
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 ! "
                 "rtph264depay ! h264parse ! avdec_h264 ! "
-    		    "videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
-    		    "appsink drop=true max-buffers=1 sync=false "
+                "videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
+                "appsink drop=true max-buffers=1 sync=false "
             )
         else:
             pipeline = (
@@ -180,26 +174,14 @@ class RTSPStream:
                 continue
 
             # Resize the frame to 640x480 for faster processing
-            #frame = cv2.resize(frame, (640, 480))
-
-            # Anti-spoofing: check liveness
-            if self.prev_frame is not None:
-                live, mean_diff = is_live_frame(frame, self.prev_frame, diff_threshold=2.0)
-                if not live:
-                    cv2.putText(frame, "Spoof Detected", (10, 60), cv2.FONT_HERSHEY_SIMPLEX,
-                                1, (0, 0, 255), 2)
-                    with frame_lock:
-                        latest_frames[self.name] = frame.copy()
-                    self.prev_frame = frame.copy()
-                    continue
-            self.prev_frame = frame.copy()
+            # frame = cv2.resize(frame, (640, 480))
 
             # If ROI is defined, use that portion for face recognition.
             if self.roi is not None:
                 (roi_x, roi_y, roi_w, roi_h) = self.roi
                 # Draw the ROI rectangle on the full frame for visualization.
                 cv2.rectangle(frame, (roi_x, roi_y), (roi_x + roi_w, roi_y + roi_h), (255, 0, 0), 2)
-                roi_frame = frame[roi_y:roi_y+roi_h, roi_x:roi_x+roi_w]
+                roi_frame = frame[roi_y:roi_y + roi_h, roi_x:roi_x + roi_w]
                 faces = self.face_recognizer.recognize_faces(roi_frame)
                 # Adjust detected face coordinates back to the full frame.
                 adjusted_faces = []
@@ -224,21 +206,22 @@ class RTSPStream:
 
         self.video_capture.release()
 
+
 def main():
     # Define RTSP URLs for cameras (update with your credentials and IPs)
     rtsp_streams = {
         "Camera Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
         "Camera Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
         # Note: URL below uses a percent-encoded password. Replace accordingly.
-        #"Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
+        # "Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
     }
 
     # Define a dictionary mapping camera names to ROI tuples.
     # For example, here we set an ROI for "Camera Labs" (top of the frame) and leave others as full frame.
     camera_rois = {
-        "Camera Labs": (0, 0, 1280, 200),
-        "Camera Spaceship": None,
-        "Camera 3": None  # No ROI defined for Camera 3.
+        "Labs": (50, 100, 500, 350),
+        "Spaceship": (20, 250, 400, 200),
+        "HIK 1": None  # No ROI defined for Camera 3.
     }
 
     face_recognizer = FaceRecognition(FACEBANK_PATH)
@@ -269,6 +252,7 @@ def main():
     for t in threads:
         t.join()
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
