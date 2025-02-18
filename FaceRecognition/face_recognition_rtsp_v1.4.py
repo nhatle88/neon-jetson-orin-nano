@@ -243,7 +243,7 @@ def main():
         if frames:
             try:
                 combined_frame = combine_frames_grid(frames, cols=3)
-                cv2.imshow("Combined Cameras", combined_frame)
+                cv2.imshow("AI Security Camera Streams", combined_frame)
             except Exception as e:
                 print("Error combining frames:", e)
         if cv2.waitKey(1) & 0xFF == ord('q'):
