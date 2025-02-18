@@ -223,8 +223,8 @@ def main():
         "Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
         "HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202",
         "UVK Parking": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
-        "LPM Parking": "rtsp://admin:L26EF2FD@hongnhung12.duckdns.org:557/cam/realmonitor?channel=1&subtype=1",
-        "LBB Parking": "rtsp://admin:L206D1F0@hcr086zs3b5.sn.mynetname.net:557/cam/realmonitor?channel=1&subtype=1"
+        "UVK Gate": "rtsp://admin:L268C6B7@d5030edfff7a.sn.mynetname.net:556/cam/realmonitor?channel=1",
+        "LBB F4": "rtsp://admin:L201353B@hcr086zs3b5.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1"
     }
 
     # Define a dictionary mapping camera names to ROI tuples.
