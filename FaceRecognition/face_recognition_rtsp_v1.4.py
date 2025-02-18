@@ -256,7 +256,7 @@ def main():
             frames = [frame for frame in latest_frames.values() if frame is not None]
         if frames:
             try:
-                combined_frame = combine_frames_gridk(frames, cols=3)
+                combined_frame = combine_frames_grid(frames, cols=3)
                 cv2.imshow("Combined Cameras", combined_frame)
             except Exception as e:
                 print("Error combining frames:", e)
