@@ -229,7 +229,7 @@ def main():
         "Camera Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
         "Camera Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
         # Note: URL below uses a percent-encoded password. Replace accordingly.
-        #"Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
+        "Camera HIK Vision": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202"
     }
 
     # Define a dictionary mapping camera names to ROI tuples.
@@ -256,7 +256,7 @@ def main():
             frames = [frame for frame in latest_frames.values() if frame is not None]
         if frames:
             try:
-                combined_frame = combine_frames_gridk(frames, cols=3)
+                combined_frame = combine_frames_grid(frames, cols=3)
                 cv2.imshow("Combined Cameras", combined_frame)
             except Exception as e:
                 print("Error combining frames:", e)
