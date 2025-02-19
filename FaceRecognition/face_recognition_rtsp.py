@@ -3,6 +3,23 @@ import cv2
 import numpy as np
 import face_recognition
 import threading
+import time
+import math
+
+def choose_best_cols(n, frame_width=640, frame_height=480, max_width=1920, max_height=1080):
+    best_cols = 1
+    best_area = 0
+    for cols in range(1, n + 1):
+        rows = math.ceil(n / cols)
+        grid_width = cols * frame_width
+        grid_height = rows * frame_height
+        if grid_width <= max_width and grid_height <= max_height:
+            area = grid_width * grid_height
+            if area > best_area:
+                best_area = area
+                best_cols = cols
+    return best_cols
+
 
 # Global constants and shared variables
 FACEBANK_PATH = "facebank"
@@ -140,23 +157,23 @@ class RTSPStream:
     def create_capture_pipeline(self, rtsp_url):
         """
         Depending on the URL, use a different GStreamer pipeline.
-        For the third stream (if "aircity2025.
         """
+        # For HIK VISION cameras
         if "aircity2025" in rtsp_url:
-            # Use a simpler pipeline with avdec_h264 (and ensure credentials are URL-encoded)
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 ! "
                 "rtph264depay ! h264parse ! avdec_h264 ! "
-                "videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
+                "videoconvert ! videoscale ! video/x-raw,format=BGR,width=320,height=240 ! "
                 "appsink drop=true max-buffers=1 sync=false "
             )
+        # For IMOU cameras 
         else:
             pipeline = (
                 f"rtspsrc location={rtsp_url} latency=100 protocols=udp drop-on-latency=true ! "
                 "rtph264depay ! h264parse ! queue max-size-buffers=1 ! nvv4l2decoder ! "
-                "nvvidconv ! videoconvert ! video/x-raw,format=BGR,width=640,height=480 ! "
+                "nvvidconv ! videoconvert ! video/x-raw,format=BGR,width=320,height=240 ! "
                 "appsink drop=true max-buffers=1 sync=false"
-            )
+            ) 
         capture = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
         if not capture.isOpened():
             print(f"[ERROR] Unable to open RTSP stream: {rtsp_url}")
@@ -175,7 +192,7 @@ class RTSPStream:
                     print(f"[WARNING] Failed to grab frame from {self.rtsp_url}")
                     first_warning = False
                 # Create a black frame if the stream is not running
-                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                frame = np.zeros((240, 320, 3), dtype=np.uint8)
                 text = "Stream Not Available"
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_scale = 1
@@ -219,20 +236,37 @@ class RTSPStream:
 def main():
     # Define RTSP URLs for cameras (update with your credentials and IPs)
     rtsp_streams = {
-        "Labs": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
-        "Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
-        "HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202",
-        "UVK Parking": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
-        "UVK Gate": "rtsp://admin:L268C6B7@d5030edfff7a.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1",
-        "LBB F4": "rtsp://admin:L201353B@hcr086zs3b5.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1"
-    }
+	"Labs 1": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Labs 2": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Labs 3": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Labs 4": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Labs 5": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Labs 6": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
+	"Spaceship 1": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
+	"HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/802",
+	"HIK Vision 2": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202",
+	"HIK Vision 3": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/302",
+	"HIK Vision 4": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/402",
+	"HIK Vision 5": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/502",
+	"HIK Vision 6": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/602",
+	"HIK Vision 7": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/702",
+	"HIK Vision 8": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/902",
+	"HIK Vision 9": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1002",
+	"HIK Vision 10": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1102",
+	"HIK Vision 11": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1201",
+	"HIK Vision 12": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1402",
+	"UVK G1": "rtsp://admin:L268C6B7@d5030edfff7a.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1",
+	"UVK P1": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"LPM Gate": "rtsp://admin:L26EF2FD@hongnhung12.duckdns.org:559/cam/realmonitor?channel=1&subtype=1",
+	"LBB F1": "rtsp://admin:L201353B@hcr086zs3b5.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1"
+    } # 42 cameras
 
     # Define a dictionary mapping camera names to ROI tuples.
     # For example, here we set an ROI for "Camera Labs" (top of the frame) and leave others as full frame.
     camera_rois = {
-        "Labs": (50, 100, 500, 350),
-        "Spaceship": (20, 250, 400, 200),
-        "HIK Vision 1": (10, 10, 600, 400)  # No ROI defined for Camera 3.
+       # "Labs": (50, 100, 500, 350),
+       # "Spaceship": (20, 250, 400, 200),
+       # "HIK Vision 1": (10, 10, 600, 400)
     }
 
     face_recognizer = FaceRecognition(FACEBANK_PATH)
@@ -251,12 +285,21 @@ def main():
             frames = [frame for frame in latest_frames.values() if frame is not None]
         if frames:
             try:
-                combined_frame = combine_frames_grid(frames, cols=3)
-                cv2.imshow("AI Security Camera Streams", combined_frame)
+                combined_frame = combine_frames_grid(frames, cols=6)
+                combined_frame_gpu = cv2.UMat(combined_frame)
+                scale_percent = 80
+                width = int(combined_frame_gpu.get().shape[1]*scale_percent/100)
+                height = int(combined_frame_gpu.get().shape[0]*scale_percent/100)
+                dim = (width, height)
+                
+                resized_frame_gpu = cv2.resize(combined_frame_gpu, dim, interpolation=cv2.INTER_NEAREST)
+                resized_frame = resized_frame_gpu.get()
+                cv2.imshow("AI Security Camera Streams", resized_frame)
             except Exception as e:
                 print("Error combining frames:", e)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        time.sleep(1) # delay for 1 second
 
     for stream in streams:
         stream.running = False
