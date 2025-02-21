@@ -6,6 +6,8 @@ import threading
 import time
 import math
 
+os.environ["GST_DEBUG"] = "*:3"  # or "*:4" for more verbosity
+
 def choose_best_cols(n, frame_width=640, frame_height=480, max_width=1920, max_height=1080):
     best_cols = 1
     best_area = 0
@@ -158,6 +160,7 @@ class RTSPStream:
         """
         Depending on the URL, use a different GStreamer pipeline.
         """
+        #pipeline.set_state(Gst.State.NULL) # clean up pipeline
         # For HIK VISION cameras
         if "aircity2025" in rtsp_url:
             pipeline = (
@@ -185,13 +188,15 @@ class RTSPStream:
         only in the defined ROI (if provided). Also overlays the camera name on the frame.
         """
         first_warning = True
+        frame_counter = 0
+        skip_factor = 29 # process one frame out of every 30
         while self.running:
             ret, frame = self.video_capture.read()
             if not ret:
                 if first_warning:
                     print(f"[WARNING] Failed to grab frame from {self.rtsp_url}")
                     first_warning = False
-                # Create a black frame if the stream is not running
+                # Create a black frame if the stream is not running    
                 frame = np.zeros((240, 320, 3), dtype=np.uint8)
                 text = "Stream Not Available"
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -201,6 +206,10 @@ class RTSPStream:
                 text_x = (frame.shape[1] - text_size[0]) // 2
                 text_y = (frame.shape[0] + text_size[1]) // 2
                 cv2.putText(frame, text, (text_x, text_y), font, font_scale, (250, 0, 0), font_thickness)
+                
+            frame_counter += 1
+            if frame_counter % skip_factor != 0:
+                continue
 
             # If ROI is defined, use that portion for face recognition.
             if self.roi is not None:
@@ -242,24 +251,29 @@ def main():
 	"Labs 4": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
 	"Labs 5": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
 	"Labs 6": "rtsp://admin:L2F2A85E@192.168.1.192:554/cam/realmonitor?channel=1&subtype=1",
-	"Spaceship 1": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
-	"HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/802",
-	"HIK Vision 2": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202",
-	"HIK Vision 3": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/302",
-	"HIK Vision 4": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/402",
-	"HIK Vision 5": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/502",
-	"HIK Vision 6": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/602",
-	"HIK Vision 7": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/702",
+	"HIK Vision 1": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/202",
+	"HIK Vision 2": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/302",
+	"HIK Vision 3": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/402",
+	"HIK Vision 4": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/502",
+	"HIK Vision 5": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/602",
+	"HIK Vision 6": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/702",
+	"HIK Vision 7": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/802",
 	"HIK Vision 8": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/902",
 	"HIK Vision 9": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1002",
 	"HIK Vision 10": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1102",
 	"HIK Vision 11": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1201",
 	"HIK Vision 12": "rtsp://admin:aircity2025@192.168.1.2:554/Streaming/channels/1402",
+	"Spaceship": "rtsp://admin:L297FC1C@192.168.1.185:554/cam/realmonitor?channel=1&subtype=1",
 	"UVK G1": "rtsp://admin:L268C6B7@d5030edfff7a.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1",
 	"UVK P1": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"UVK P2": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"UVK P3": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"UVK P4": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"UVK P5": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
+	"UVK P6": "rtsp://admin:L2EC70CF@d5030edfff7a.sn.mynetname.net:554/cam/realmonitor?channel=1&subtype=1",
 	"LPM Gate": "rtsp://admin:L26EF2FD@hongnhung12.duckdns.org:559/cam/realmonitor?channel=1&subtype=1",
-	"LBB F1": "rtsp://admin:L201353B@hcr086zs3b5.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1"
-    } # 42 cameras
+	"LBB F4": "rtsp://admin:L201353B@hcr086zs3b5.sn.mynetname.net:556/cam/realmonitor?channel=1&subtype=1"
+    } # 30 cameras
 
     # Define a dictionary mapping camera names to ROI tuples.
     # For example, here we set an ROI for "Camera Labs" (top of the frame) and leave others as full frame.
@@ -287,7 +301,7 @@ def main():
             try:
                 combined_frame = combine_frames_grid(frames, cols=6)
                 combined_frame_gpu = cv2.UMat(combined_frame)
-                scale_percent = 80
+                scale_percent = 90
                 width = int(combined_frame_gpu.get().shape[1]*scale_percent/100)
                 height = int(combined_frame_gpu.get().shape[0]*scale_percent/100)
                 dim = (width, height)
@@ -299,7 +313,7 @@ def main():
                 print("Error combining frames:", e)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        time.sleep(1) # delay for 1 second
+        #time.sleep(1) # delay for 1 second
 
     for stream in streams:
         stream.running = False
